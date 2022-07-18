@@ -28,7 +28,7 @@ func (this *INIParser) GetSectionNames() []string {
 func (this *INIParser) GetSections() Sections {
     userCopy := make(Sections)
     for sectionName, section := range this.dataMap {
-        userCopy[sectionName] = make(keys)
+        userCopy[sectionName] = make(entities)
         for name, value := range section {
             userCopy[sectionName][name] = value
         }

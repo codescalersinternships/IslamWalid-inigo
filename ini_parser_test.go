@@ -28,8 +28,8 @@ file = "payroll.dat"
 
 func TestLoadFromString(t *testing.T) {
     got := make(Sections)
-    want := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    want := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
     got.parseIniString(`; last modified 1 April 2001 by John Doe
 [owner]
@@ -49,8 +49,8 @@ file = "payroll.dat"
 }
 
 func TestGetSectionNames(t *testing.T) {
-    iniMap := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    iniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
     want := []string{"owner", "database"}
     got := iniMap.getSectionNames()
@@ -77,10 +77,10 @@ func TestGetSectionNames(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-    iniName := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    iniName := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
-    t.Run("key exists", func(t *testing.T) {
+    t.Run("entity exists", func(t *testing.T) {
         want := "John Doe"
         got, _ := iniName.get("owner", "name")
 
@@ -89,8 +89,8 @@ func TestGet(t *testing.T) {
         }
     })
 
-    t.Run("key does not exist", func(t *testing.T) {
-        want := "This key does not exist in the ini data"
+    t.Run("entity does not exist", func(t *testing.T) {
+        want := "This entity does not exist in the ini data"
         _, err := iniName.get("unkown section", "unknown key")
 
         if err == nil {
@@ -104,10 +104,10 @@ func TestGet(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-    iniMap := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    iniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
-    t.Run("key exists", func(t *testing.T) {
+    t.Run("entity exists", func(t *testing.T) {
         want := "CodeScalser"
         iniMap.set("owner", "organization", "CodeScalser")
         got, _ := iniMap.get("owner", "organization")
@@ -117,8 +117,8 @@ func TestSet(t *testing.T) {
         }
     })
 
-    t.Run("key does not exist", func(t *testing.T) {
-        want := "This key does not exist in the ini data"
+    t.Run("entity does not exist", func(t *testing.T) {
+        want := "This entity does not exist in the ini data"
         err := iniMap.set("unkown section", "unknown key", "some value")
 
         if err == nil {
@@ -132,8 +132,8 @@ func TestSet(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-    refIniMap := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    refIniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
     refString := `; last modified 1 April 2001 by John Doe
 [owner]
@@ -158,8 +158,8 @@ file = "payroll.dat"
 }
 
 func TestSaveToFile(t *testing.T) {
-    want := Sections{"owner": keys{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": keys{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    want := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
 
     want.saveToFile("ini_files/gen.ini")
 

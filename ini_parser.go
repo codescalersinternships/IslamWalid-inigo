@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const KeyDoesNotExist = ParserError("This key does not exist in the ini data")
+const EntityDoesNotExist = ParserError("This entity does not exist in the ini data")
 
 type ParserError string
 
@@ -15,9 +15,9 @@ func (e ParserError) Error() string {
     return string(e)
 }
 
-type Sections map[string]keys
+type Sections map[string]entities
 
-type keys map[string]string
+type entities map[string]string
 
 func (this Sections) readFile(path string) (string, error) {
     data, err := os.ReadFile(path)
@@ -33,9 +33,9 @@ func (this Sections) parseIniString(iniData string) {
     dataLines := strings.Split(iniData, "\n")
     sectionRgx := regexp.MustCompile(`\[.*?\]`)
 
-    parseKey := func (key string) (string, string) {
-        keyList := strings.Split(key, "=")
-        return strings.Trim(keyList[0], " "), strings.Trim(keyList[1], " ")
+    parseEntity := func (entity string) (string, string) {
+        nameValueList := strings.Split(entity, "=")
+        return strings.Trim(nameValueList[0], " "), strings.Trim(nameValueList[1], " ")
     }
 
     for _, line := range dataLines {
@@ -46,10 +46,10 @@ func (this Sections) parseIniString(iniData string) {
                     currentSectionName = sectionRgx.FindString(line)
                     currentSectionName = strings.Trim(currentSectionName, " [] ")
                     if _, isExist := this[currentSectionName]; !isExist {
-                        this[currentSectionName] = make(keys)
+                        this[currentSectionName] = make(entities)
                     }
                 } else {
-                    name, value := parseKey(line)
+                    name, value := parseEntity(line)
                     this[currentSectionName][name] = value
                 }
             }
@@ -71,7 +71,7 @@ func (this Sections) get(sectionName, name string) (string, error) {
     if value, isExist := this[sectionName][name]; isExist {
         return value, nil
     } else {
-        return "", KeyDoesNotExist
+        return "", EntityDoesNotExist
     }
 }
 
@@ -80,7 +80,7 @@ func (this Sections) set(sectionName, name, value string) error{
         this[sectionName][name] = value
         return nil
     } else {
-        return KeyDoesNotExist
+        return EntityDoesNotExist
     }
 }
 
