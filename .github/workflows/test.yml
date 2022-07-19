@@ -21,14 +21,14 @@ jobs:
     - name: go test
       run: go test -v -cover ./...
 
-    windows_test:
-      runs-on: windows-latest
-      - uses: actions/checkout@v3
+  windows_test:
+    runs-on: windows-latest
+    - uses: actions/checkout@v3
 
-      - name: install golang
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
+    - name: install golang
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
 
-      - name: go test
-        run: go test -v -cover ./...
+    - name: go test
+      run: go test -v -cover ./...
