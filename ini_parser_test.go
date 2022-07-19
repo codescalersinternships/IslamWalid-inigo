@@ -1,37 +1,34 @@
 package iniparser
 
 import (
+	"path"
 	"reflect"
 	"testing"
 )
 
 func TestLoadFromFile(t *testing.T) {
-    iniMap := make(Sections)
+    t.Run("file exists", func(t *testing.T) {
+        want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-    want := `; last modified 1 April 2001 by John Doe
-[owner]
-name = John Doe
-organization = Acme Widgets Inc.
+        got := New()
+        got.LoadFromFile(path.Join("ini_files", "ref.ini"))
+        assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
+    })
 
-[database]
-; use IP address in case network name resolution is not working
-server = 192.0.2.62     
-port = 143
-file = "payroll.dat"
-`
-    got, _ := iniMap.readFile("ini_files/ref.ini")
-
-    if got != want {
-        t.Errorf("\ngot:\n %q\n\nwant:\n%q", got, want)
-    }
+    t.Run("file does not exist", func(t *testing.T) {
+        got := New()
+        err := got.LoadFromFile("unknown file")
+        assertError(t, err, "open unknown file: no such file or directory")
+    })
 }
 
 func TestLoadFromString(t *testing.T) {
-    got := make(Sections)
-    want := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-    got.parseIniString(`; last modified 1 April 2001 by John Doe
+    got := New()
+    got.LoadFromString(`; last modified 1 April 2001 by John Doe
 [owner]
 name = John Doe
 organization = Acme Widgets Inc.
@@ -43,132 +40,134 @@ port = 143
 file = "payroll.dat"
 `)
 
-    if !reflect.DeepEqual(got, want) {
-        t.Errorf("\ngot:\n%v\n\nwant:\n%v", got, want)
-    }
+    assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
 }
 
 func TestGetSectionNames(t *testing.T) {
-    iniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     want := []string{"owner", "database"}
-    got := iniMap.getSectionNames()
+    got := p.GetSectionNames()
 
-    assertList := func (got, want []string) {
-        t.Helper()
-        wantMap := make(map[string]int)
-        gotMap := make(map[string]int)
+    assertSectionList(t, got, want)
+}
 
-        for _, elem := range want {
-            wantMap[elem]++
-        }
+func TestGestSections(t *testing.T) {
+    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-        for _, elem := range got {
-            gotMap[elem]++
-        }
+    want := p.iniDataMap
+    got := p.GetSections()
 
-        if !reflect.DeepEqual(wantMap, gotMap) {
-            t.Errorf("\ngot:\n%v\n\nwant:\n%v", got, want)
-        }
-    }
-
-    assertList(got, want)
+    assertIniDataMap(t, want, got)
 }
 
 func TestGet(t *testing.T) {
-    iniName := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
-
     t.Run("entity exists", func(t *testing.T) {
-        want := "John Doe"
-        got, _ := iniName.get("owner", "name")
+        p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-        if want != got {
-            t.Errorf("\ngot:\n%q\n\nwant:\n%q", got, want)
-        }
+        want := "John Doe"
+        got, _ := p.Get("owner", "name")
+
+        assertString(t, got, want)
     })
 
     t.Run("entity does not exist", func(t *testing.T) {
-        want := "This entity does not exist in the ini data"
-        _, err := iniName.get("unkown section", "unknown key")
+        p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-        if err == nil {
-            t.Fatal("Exptected \"KeyDoesNotExist\" error.")
-        }
+        _, err := p.Get("unknown section", "unknown key")
 
-        if want != err.Error() {
-            t.Errorf("\ngot:\n%q\n\nwant:\n%q", err.Error(), want)
-        }
+        assertError(t, err, "This entity does not exist in the ini data")
     })
 }
 
 func TestSet(t *testing.T) {
-    iniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     t.Run("entity exists", func(t *testing.T) {
         want := "CodeScalser"
-        iniMap.set("owner", "organization", "CodeScalser")
-        got, _ := iniMap.get("owner", "organization")
+        p.Set("owner", "organization", "CodeScalser")
+        got, _ := p.Get("owner", "organization")
 
-        if got != want {
-            t.Errorf("\ngot:\n%q\n\nwant:\n%q", got, want)
-        }
+        assertString(t, got, want)
     })
 
     t.Run("entity does not exist", func(t *testing.T) {
-        want := "This entity does not exist in the ini data"
-        err := iniMap.set("unkown section", "unknown key", "some value")
+        want := "new value"
+        p.Set("new section", "new name", "new value")
+        got, _ := p.Get("new section", "new name")
 
-        if err == nil {
-            t.Fatal("Exptected \"KeyDoesNotExist\" error.")
-        }
-
-        if want != err.Error() {
-            t.Errorf("\ngot:\n%q\n\nwant:\n%q", err.Error(), want)
-        }
+        assertString(t, got, want)
     })
 }
 
 func TestString(t *testing.T) {
-    refIniMap := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    refPasrser := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-    refString := `; last modified 1 April 2001 by John Doe
-[owner]
-name = John Doe
-organization = Acme Widgets Inc.
+    genString := refPasrser.String()
+    genParser := New()
+    genParser.LoadFromString(genString)
 
-[database]
-; use IP address in case network name resolution is not working
-server = 192.0.2.62     
-port = 143
-file = "payroll.dat"
-`
-
-    genString := refIniMap.toString()
-    genIniMap := make(Sections)
-    genIniMap.parseIniString(genString)
-
-    if !reflect.DeepEqual(genIniMap, refIniMap) {
-        t.Errorf("\ngenerated string:\n%q\n\nreference string:\n%q\n\nthe two strings are not equivalent",
-        genString, refString)
-    }
+    assertIniDataMap(t, refPasrser.iniDataMap, genParser.iniDataMap)
 }
 
 func TestSaveToFile(t *testing.T) {
-    want := Sections{"owner": entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}
+    want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
-    want.saveToFile("ini_files/gen.ini")
+    genFilePath := path.Join("ini_files", "gen.ini")
+    want.SaveToFile(genFilePath)
 
-    got := make(Sections)
-    gotString, _:= got.readFile("ini_files/gen.ini")
-    got.parseIniString(gotString)
+    got := New()
+    got.LoadFromFile(genFilePath)
+
+    assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
+}
+
+func assertString(t testing.TB, got, want string)  {
+    t.Helper()
+
+    if got != want {
+        t.Errorf("got:\n%q\nwant:\n%q", got, want)
+    }
+}
+
+func assertError(t testing.TB, err error, want string) {
+    t.Helper()
+    if err == nil {
+        t.Fatalf("Exptected Error: %q", want)
+    }
+    assertString(t, err.Error(), want)
+}
+
+func assertIniDataMap(t testing.TB, got, want Sections) {
+    t.Helper()
 
     if !reflect.DeepEqual(got, want) {
-        t.Errorf("\ngenerated map from generated file:\n%v\n\nwanted map:\n%v\nthe two files are not equivalent",
-        got, want)
+        t.Errorf("got:\n%v\nwant:\n%v", got, want)
+    }
+}
+
+
+func assertSectionList(t testing.TB, got, want []string) {
+    t.Helper()
+    wantMap := make(map[string]int)
+    gotMap := make(map[string]int)
+
+    for _, elem := range want {
+        wantMap[elem]++
+    }
+
+    for _, elem := range got {
+        gotMap[elem]++
+    }
+
+    if !reflect.DeepEqual(wantMap, gotMap) {
+        t.Errorf("got:\n%v\n\nwant:\n%v", got, want)
     }
 }

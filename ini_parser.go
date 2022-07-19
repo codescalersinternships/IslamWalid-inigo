@@ -1,7 +1,7 @@
 package iniparser
 
 import (
-	"fmt"
+    "fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -15,20 +15,20 @@ func (e ParserError) Error() string {
     return string(e)
 }
 
-type Sections map[string]entities
+type Sections map[string]Entities
 
-type entities map[string]string
+type Entities map[string]string
 
-func (this Sections) readFile(path string) (string, error) {
-    data, err := os.ReadFile(path)
-    if err == nil {
-        return string(data), nil
-    } else {
-        return "", err
-    }
+type Parser struct {
+    iniDataMap Sections
 }
 
-func (this Sections) parseIniString(iniData string) {
+func New() *Parser {
+    p := Parser{make(Sections)}
+    return &p
+}
+
+func (p *Parser) LoadFromString(iniData string) {
     var currentSectionName string
     dataLines := strings.Split(iniData, "\n")
     sectionRgx := regexp.MustCompile(`\[.*?\]`)
@@ -45,49 +45,72 @@ func (this Sections) parseIniString(iniData string) {
                 if sectionRgx.MatchString(line) {
                     currentSectionName = sectionRgx.FindString(line)
                     currentSectionName = strings.Trim(currentSectionName, " [] ")
-                    if _, isExist := this[currentSectionName]; !isExist {
-                        this[currentSectionName] = make(entities)
+                    if _, isExist := p.iniDataMap[currentSectionName]; !isExist {
+                        p.iniDataMap[currentSectionName] = make(Entities)
                     }
                 } else {
                     name, value := parseEntity(line)
-                    this[currentSectionName][name] = value
+                    p.iniDataMap[currentSectionName][name] = value
                 }
             }
         }
     }
 }
 
-func (this Sections) getSectionNames() []string {
+func (p *Parser) LoadFromFile(path string) error {
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return err
+    } else {
+        p.LoadFromString(string(data))
+        return nil
+    }
+}
+
+func (p *Parser) GetSectionNames() []string {
     sectionNames := make([]string, 0)
     
-    for name := range this {
+    for name := range p.iniDataMap {
         sectionNames = append(sectionNames, name)
     }
 
     return sectionNames
 }
 
-func (this Sections) get(sectionName, name string) (string, error) {
-    if value, isExist := this[sectionName][name]; isExist {
+func (p *Parser) GetSections() Sections {
+    resultMap := make(Sections)
+
+    for sectionName, sectionData := range p.iniDataMap {
+        resultMap[sectionName] = make(Entities)
+        for key, name := range sectionData {
+            resultMap[sectionName][key] = name
+        }
+    }
+    return resultMap
+}
+
+func (p *Parser) Get(sectionName, key string) (string, error) {
+    if value, isExist := p.iniDataMap[sectionName][key]; isExist {
         return value, nil
     } else {
         return "", EntityDoesNotExist
     }
 }
 
-func (this Sections) set(sectionName, name, value string) error{
-    if _, isExist := this[sectionName][name]; isExist {
-        this[sectionName][name] = value
-        return nil
-    } else {
-        return EntityDoesNotExist
+func (p *Parser) Set(sectionName, name, value string) {
+    if _, isExist := p.iniDataMap[sectionName]; !isExist {
+        p.iniDataMap = make(Sections)
     }
+    if _, isExist := p.iniDataMap[sectionName][name]; !isExist {
+        p.iniDataMap[sectionName] = make(Entities)
+    }
+    p.iniDataMap[sectionName][name] = value
 }
 
-func (this Sections) toString() string {
+func (p *Parser) String() string {
     var result string
 
-    for sectionName, section := range this {
+    for sectionName, section := range p.iniDataMap {
         result += fmt.Sprintf("[%s]\n", sectionName)
         for name, value := range section {
             result += fmt.Sprintf("%s = %s\n", name, value)
@@ -97,10 +120,10 @@ func (this Sections) toString() string {
     return result
 }
 
-func (this Sections) saveToFile(path string) error {
+func (p *Parser) SaveToFile(path string) error {
     file, err := os.Create(path)
     defer file.Close()
 
-    file.WriteString(this.toString())
+    file.WriteString(p.String())
     return err
 }
