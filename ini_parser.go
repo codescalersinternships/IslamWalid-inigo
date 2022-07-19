@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// Parser error messages
+// Parser error messages provided when error occurs during parsing and manipulation the data.
 const (
     EntityDoesNotExist = "This entity does not exist in the ini data"
     FileDoesNotExist = "no such file or directory"
@@ -69,19 +69,24 @@ func (p *Parser) LoadFromString(iniData string) {
     var currentSectionName string
     scanner := bufio.NewScanner(strings.NewReader(iniData))
 
+    // Extract name and value from entity line
     parseEntity := func (entity string) (string, string) {
         nameValueList := strings.Split(entity, entityAssignmentOperator)
         return strings.Trim(nameValueList[0], " "), strings.Trim(nameValueList[1], " ")
     }
 
+    // Parse the data file by iterating over it line by line and extract the data from it.
     for scanner.Scan() {
         line := scanner.Text()
+        // Ignore empty files
         if len(line) > 0 {
             line = strings.Trim(line, " ")
+            // Ignore comment lines
             if !strings.HasPrefix(line, commentCharacter) {
                 if sectionRgx.MatchString(line) {
                     currentSectionName = sectionRgx.FindString(line)
                     currentSectionName = strings.Trim(currentSectionName, " [] ")
+                    // Create a new section if it does not exist
                     if _, isExist := p.iniDataMap[currentSectionName]; !isExist {
                         p.iniDataMap[currentSectionName] = make(Entity)
                     }
@@ -138,7 +143,7 @@ func (p *Parser) Set(sectionName, key, value string) {
     p.iniDataMap[sectionName][key] = value
 }
 
-// 
+// String converts the ini data map into string.
 func (p *Parser) String() string {
     var result string
 
@@ -152,6 +157,7 @@ func (p *Parser) String() string {
     return result
 }
 
+// SaveToFile writes the data map converted into string in a file with the given path.
 func (p *Parser) SaveToFile(path string) error {
     file, err := os.Create(path)
     defer file.Close()
