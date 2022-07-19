@@ -8,8 +8,8 @@ import (
 
 func TestLoadFromFile(t *testing.T) {
     t.Run("file exists", func(t *testing.T) {
-        want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+        want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
         got := New()
         got.LoadFromFile(path.Join("ini_files", "ref.ini"))
@@ -24,8 +24,8 @@ func TestLoadFromFile(t *testing.T) {
 }
 
 func TestLoadFromString(t *testing.T) {
-    want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     got := New()
     got.LoadFromString(`; last modified 1 April 2001 by John Doe
@@ -44,8 +44,8 @@ file = "payroll.dat"
 }
 
 func TestGetSectionNames(t *testing.T) {
-    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     want := []string{"owner", "database"}
     got := p.GetSectionNames()
@@ -54,8 +54,8 @@ func TestGetSectionNames(t *testing.T) {
 }
 
 func TestGetSections(t *testing.T) {
-    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     want := p.iniDataMap
     got := p.GetSections()
@@ -65,8 +65,8 @@ func TestGetSections(t *testing.T) {
 
 func TestGet(t *testing.T) {
     t.Run("entity exists", func(t *testing.T) {
-        p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+        p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
         want := "John Doe"
         got, _ := p.Get("owner", "name")
@@ -75,8 +75,8 @@ func TestGet(t *testing.T) {
     })
 
     t.Run("entity does not exist", func(t *testing.T) {
-        p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+        p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
         _, err := p.Get("unknown section", "unknown key")
 
@@ -85,8 +85,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-    p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     t.Run("entity exists", func(t *testing.T) {
         want := "CodeScalser"
@@ -106,8 +106,8 @@ func TestSet(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-    refPasrser := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    refPasrser := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     genString := refPasrser.String()
     genParser := New()
@@ -117,8 +117,8 @@ func TestString(t *testing.T) {
 }
 
 func TestSaveToFile(t *testing.T) {
-    want := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
     genFilePath := path.Join("ini_files", "gen.ini")
     want.SaveToFile(genFilePath)
@@ -145,7 +145,7 @@ func assertError(t testing.TB, err error, want string) {
     assertString(t, err.Error(), want)
 }
 
-func assertIniDataMap(t testing.TB, got, want Sections) {
+func assertIniDataMap(t testing.TB, got, want Section) {
     t.Helper()
 
     if !reflect.DeepEqual(got, want) {
