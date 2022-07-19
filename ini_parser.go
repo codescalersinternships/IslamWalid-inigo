@@ -12,13 +12,16 @@ import (
 // Parser error messages provided when error occurs during parsing and manipulation the data.
 const (
     EntityDoesNotExist = "This entity does not exist in the ini data"
-    FileDoesNotExist = "no such file or directory"
+    FileDoesNotExist = "No such file or directory"
+    WrongFormat = "Wrong INI Format"
 )
 
 const (
     // constant used to repersent comment character in ini files.
     commentCharacter = ";"
     entityAssignmentOperator = "="
+    openSetionBracket = "["
+    closeSetionBracket = "]"
 )
 
 // Regular expression used to match lines that contain secion starter.
@@ -65,14 +68,57 @@ func (p *Parser) LoadFromFile(path string) error {
 
 // LoadFromString is a Parser method reads the data in ini string.
 // it converts the string into map of section names and section entities.
-func (p *Parser) LoadFromString(iniData string) {
+func (p *Parser) LoadFromString(iniData string) error {
     var currentSectionName string
     scanner := bufio.NewScanner(strings.NewReader(iniData))
 
-    // Extract name and value from entity line
-    parseEntity := func (entity string) (string, string) {
-        nameValueList := strings.Split(entity, entityAssignmentOperator)
-        return strings.Trim(nameValueList[0], " "), strings.Trim(nameValueList[1], " ")
+    // Check if reserved characters is used wrongly
+    checkWrongCharacthers := func (token string) bool {
+        return strings.Contains(token, commentCharacter) ||
+        strings.Contains(token, entityAssignmentOperator) ||
+        strings.Contains(token, openSetionBracket) ||
+        strings.Contains(token, closeSetionBracket)
+    }
+
+    // Extract name and value from entity line and return an error if the format is unvalid
+    parseEntity := func (entityLine string) (string, string, bool) {
+        entityLine = strings.Trim(entityLine, " ")
+        keyValueList := strings.Split(entityLine, entityAssignmentOperator)
+
+        // Check that keyValueList contains two values only
+        if len(keyValueList) == 2 {
+            key := keyValueList[0]
+            value := keyValueList[1]
+            
+            key = strings.Trim(key, " ")
+            value = strings.Trim(value, " ")
+
+            if !checkWrongCharacthers(key) && !checkWrongCharacthers(value) {
+                // check if key and value not empty strings
+                if len(key) > 0 && len(value) > 0 {
+                    return key, value, true
+                }
+            }
+        }
+        return "", "", false
+    }
+
+    // Extract the name of the section and return an error if the format is unvalid
+    parseSectionName := func (sectionLine string) (string, bool) {
+        sectionLine = strings.Trim(sectionLine, " ")
+
+        // Check if section name is surrounded by "[]"
+        if strings.HasPrefix(sectionLine, openSetionBracket) &&
+        strings.HasSuffix(sectionLine, closeSetionBracket) {
+            sectionLine = strings.Trim(sectionLine, "[ ]")
+
+            // Check if wrong characters are not used
+            if !checkWrongCharacthers(sectionLine) {
+                return sectionLine, true
+            }
+        }
+
+        return "", false
     }
 
     // Parse the data file by iterating over it line by line and extract the data from it.
@@ -80,23 +126,24 @@ func (p *Parser) LoadFromString(iniData string) {
         line := scanner.Text()
         // Ignore empty files
         if len(line) > 0 {
-            line = strings.Trim(line, " ")
             // Ignore comment lines
             if !strings.HasPrefix(line, commentCharacter) {
-                if sectionRgx.MatchString(line) {
-                    currentSectionName = sectionRgx.FindString(line)
-                    currentSectionName = strings.Trim(currentSectionName, " [] ")
+                if sectionName, isCorrect := parseSectionName(line); isCorrect {
+                    // Hold the current correct section name
+                    currentSectionName = sectionName
                     // Create a new section if it does not exist
                     if _, isExist := p.iniDataMap[currentSectionName]; !isExist {
                         p.iniDataMap[currentSectionName] = make(Entity)
                     }
-                } else {
-                    name, value := parseEntity(line)
+                } else if name, value, isCorrect := parseEntity(line); isCorrect {
                     p.iniDataMap[currentSectionName][name] = value
+                } else {
+                    return ParserError(WrongFormat)
                 }
             }
         }
     }
+    return nil
 }
 
 // GetSectionNames returns a slice of the section names.
@@ -135,9 +182,6 @@ func (p *Parser) Get(sectionName, key string) (string, error) {
 // Set assign the given value to the given section name and key.
 func (p *Parser) Set(sectionName, key, value string) {
     if _, isExist := p.iniDataMap[sectionName]; !isExist {
-        p.iniDataMap = make(Section)
-    }
-    if _, isExist := p.iniDataMap[sectionName][key]; !isExist {
         p.iniDataMap[sectionName] = make(Entity)
     }
     p.iniDataMap[sectionName][key] = value

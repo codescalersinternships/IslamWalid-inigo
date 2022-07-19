@@ -22,17 +22,32 @@ func TestLoadFromFile(t *testing.T) {
     t.Run("file does not exist", func(t *testing.T) {
         got := New()
         err := got.LoadFromFile("unknown file")
-        assertError(t, err, "unknown file: no such file or directory")
+        assertError(t, err, "unknown file: No such file or directory")
     })
 }
 
 func TestLoadFromString(t *testing.T) {
-    want := newRefParser()
+    t.Run("No format errors", func(t *testing.T) {
+        want := newRefParser()
+        got := New()
+        got.LoadFromString(refIniString())
 
-    got := New()
-    got.LoadFromString(refIniString())
+        assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
+    })
 
-    assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
+    t.Run("Format errors", func(t *testing.T) {
+        p := New()
+
+        for _, wrongCase := range wrongIniStrings() {
+            err := p.LoadFromString(wrongCase)
+            if err == nil {
+                t.Fatalf("Excepected error: %q\n when parsing wrong case: %q", WrongFormat, wrongCase)
+            } else {
+                assertString(t, err.Error(), WrongFormat)
+            }
+        }
+    })
+
 }
 
 func TestGetSectionNames(t *testing.T) {
@@ -235,6 +250,18 @@ server = 192.0.2.62
 port = 143
 file = "payroll.dat"
 `
+}
+
+func wrongIniStrings() []string {
+    var wrongCases []string
+    wrongCases = append(wrongCases, "last modified 1 April 2001 by John Doe")
+    wrongCases = append(wrongCases, "[owner")
+    wrongCases = append(wrongCases, "name  John Doe")
+    wrongCases = append(wrongCases, "[1234.9;890]")
+    wrongCases = append(wrongCases, "serv==er = ;192.0.2.62     ")
+    wrongCases = append(wrongCases, "port =")
+
+    return wrongCases
 }
 
 func assertString(t testing.TB, got, want string) {
