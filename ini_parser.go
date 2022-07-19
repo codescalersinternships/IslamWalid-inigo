@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -23,9 +22,6 @@ const (
     openSetionBracket = "["
     closeSetionBracket = "]"
 )
-
-// Regular expression used to match lines that contain secion starter.
-var sectionRgx = regexp.MustCompile(`\[.*?\]`)
 
 // ParserError implements error interface defines errors encountered while using the parser.
 type ParserError string
