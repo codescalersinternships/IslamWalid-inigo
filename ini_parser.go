@@ -1,13 +1,20 @@
 package iniparser
 
 import (
-    "fmt"
+	"bufio"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
 )
 
 const EntityDoesNotExist = ParserError("This entity does not exist in the ini data")
+
+const (
+    commentOperator = ";"
+    entityAssignmentOperator = "="
+    sectionRgx = `\[.*?\]`
+)
 
 type ParserError string
 
@@ -30,18 +37,19 @@ func New() *Parser {
 
 func (p *Parser) LoadFromString(iniData string) {
     var currentSectionName string
-    dataLines := strings.Split(iniData, "\n")
-    sectionRgx := regexp.MustCompile(`\[.*?\]`)
+    sectionRgx := regexp.MustCompile(sectionRgx)
+    scanner := bufio.NewScanner(strings.NewReader(iniData))
 
     parseEntity := func (entity string) (string, string) {
-        nameValueList := strings.Split(entity, "=")
+        nameValueList := strings.Split(entity, entityAssignmentOperator)
         return strings.Trim(nameValueList[0], " "), strings.Trim(nameValueList[1], " ")
     }
 
-    for _, line := range dataLines {
+    for scanner.Scan() {
+        line := scanner.Text()
         if len(line) > 0 {
             line = strings.Trim(line, " ")
-            if line[0] != ';' {
+            if !strings.HasPrefix(line, commentOperator) {
                 if sectionRgx.MatchString(line) {
                     currentSectionName = sectionRgx.FindString(line)
                     currentSectionName = strings.Trim(currentSectionName, " [] ")

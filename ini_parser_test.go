@@ -53,7 +53,7 @@ func TestGetSectionNames(t *testing.T) {
     assertSectionList(t, got, want)
 }
 
-func TestGestSections(t *testing.T) {
+func TestGetSections(t *testing.T) {
     p := Parser{iniDataMap: Sections{"owner": Entities{"name": "John Doe", "organization": "Acme Widgets Inc."},
     "database": Entities{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
 
