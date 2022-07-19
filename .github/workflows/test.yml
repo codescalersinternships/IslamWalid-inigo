@@ -8,8 +8,7 @@ on:
 
 jobs:
 
-  ubuntu_test:
-    name: run the test on linux machine
+  code_testing:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

@@ -9,8 +9,11 @@ import (
 	"strings"
 )
 
-// EntityDoesNotExist is an error when user try to access key or section does not exist.
-const EntityDoesNotExist = ParserError("This entity does not exist in the ini data")
+// Parser error messages
+const (
+    EntityDoesNotExist = "This entity does not exist in the ini data"
+    FileDoesNotExist = "no such file or directory"
+)
 
 const (
     // constant used to repersent comment character in ini files.
@@ -49,6 +52,17 @@ func New() *Parser {
     return &p
 }
 
+// LoadFromFile takes an ini file path as its argument then converts it to map of section names and section entities.
+func (p *Parser) LoadFromFile(path string) error {
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return ParserError(fmt.Sprintf("%s: %s", path, FileDoesNotExist))
+    } else {
+        p.LoadFromString(string(data))
+        return nil
+    }
+}
+
 // LoadFromString is a Parser method reads the data in ini string.
 // it converts the string into map of section names and section entities.
 func (p *Parser) LoadFromString(iniData string) {
@@ -77,17 +91,6 @@ func (p *Parser) LoadFromString(iniData string) {
                 }
             }
         }
-    }
-}
-
-// LoadFromFile takes an ini file path as its argument then converts it to map of section names and section entities.
-func (p *Parser) LoadFromFile(path string) error {
-    data, err := os.ReadFile(path)
-    if err != nil {
-        return err
-    } else {
-        p.LoadFromString(string(data))
-        return nil
     }
 }
 
@@ -120,7 +123,7 @@ func (p *Parser) Get(sectionName, key string) (string, error) {
     if value, isExist := p.iniDataMap[sectionName][key]; isExist {
         return value, nil
     } else {
-        return "", EntityDoesNotExist
+        return "", ParserError(EntityDoesNotExist)
     }
 }
 

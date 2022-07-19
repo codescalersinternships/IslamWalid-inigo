@@ -19,7 +19,7 @@ func TestLoadFromFile(t *testing.T) {
     t.Run("file does not exist", func(t *testing.T) {
         got := New()
         err := got.LoadFromFile("unknown file")
-        assertError(t, err, "open unknown file: no such file or directory")
+        assertError(t, err, "unknown file: no such file or directory")
     })
 }
 
