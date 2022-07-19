@@ -12,8 +12,7 @@ import (
 
 func TestLoadFromFile(t *testing.T) {
     t.Run("file exists", func(t *testing.T) {
-        want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+        want := newRefParser()
 
         got := New()
         got.LoadFromFile(path.Join("ini_files", "ref.ini"))
@@ -28,28 +27,16 @@ func TestLoadFromFile(t *testing.T) {
 }
 
 func TestLoadFromString(t *testing.T) {
-    want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    want := newRefParser()
 
     got := New()
-    got.LoadFromString(`; last modified 1 April 2001 by John Doe
-[owner]
-name = John Doe
-organization = Acme Widgets Inc.
-
-[database]
-; use IP address in case network name resolution is not working
-server = 192.0.2.62     
-port = 143
-file = "payroll.dat"
-`)
+    got.LoadFromString(refIniString())
 
     assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
 }
 
 func TestGetSectionNames(t *testing.T) {
-    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := newRefParser()
 
     want := []string{"owner", "database"}
     got := p.GetSectionNames()
@@ -58,8 +45,7 @@ func TestGetSectionNames(t *testing.T) {
 }
 
 func TestGetSections(t *testing.T) {
-    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := newRefParser()
 
     want := p.iniDataMap
     got := p.GetSections()
@@ -69,28 +55,21 @@ func TestGetSections(t *testing.T) {
 
 func TestGet(t *testing.T) {
     t.Run("entity exists", func(t *testing.T) {
-        p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
-
+        p := newRefParser()
         want := "John Doe"
         got, _ := p.Get("owner", "name")
-
         assertString(t, got, want)
     })
 
     t.Run("entity does not exist", func(t *testing.T) {
-        p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-        "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
-
+        p := newRefParser()
         _, err := p.Get("unknown section", "unknown key")
-
         assertError(t, err, "This entity does not exist in the ini data")
     })
 }
 
 func TestSet(t *testing.T) {
-    p := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    p := newRefParser()
 
     t.Run("entity exists", func(t *testing.T) {
         want := "CodeScalser"
@@ -110,8 +89,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-    refPasrser := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    refPasrser := newRefParser()
 
     genString := refPasrser.String()
     genParser := New()
@@ -121,8 +99,7 @@ func TestString(t *testing.T) {
 }
 
 func TestSaveToFile(t *testing.T) {
-    want := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
-    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+    want := newRefParser()
 
     genFilePath := path.Join("ini_files", "gen.ini")
     want.SaveToFile(genFilePath)
@@ -238,6 +215,27 @@ func ExampleParser_SaveToFile() {
 }
 
 // Helper functions
+
+func newRefParser() *Parser {
+    newObj := Parser{iniDataMap: Section{"owner": Entity{"name": "John Doe", "organization": "Acme Widgets Inc."},
+    "database": Entity{"server": "192.0.2.62", "port": "143", "file": "\"payroll.dat\""}}}
+
+    return &newObj
+}
+
+func refIniString() string {
+    return `; last modified 1 April 2001 by John Doe
+[owner]
+name = John Doe
+organization = Acme Widgets Inc.
+
+[database]
+; use IP address in case network name resolution is not working
+server = 192.0.2.62     
+port = 143
+file = "payroll.dat"
+`
+}
 
 func assertString(t testing.TB, got, want string) {
     t.Helper()
