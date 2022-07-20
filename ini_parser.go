@@ -108,8 +108,8 @@ func (p *Parser) LoadFromString(iniData string) error {
         strings.HasSuffix(sectionLine, closeSetionBracket) {
             sectionLine = strings.Trim(sectionLine, "[ ]")
 
-            // Check if wrong characters are not used
-            if !checkWrongCharacthers(sectionLine) {
+            // Check if wrong characters are not used and section name not empty
+            if len(sectionLine) > 0 && !checkWrongCharacthers(sectionLine) {
                 return sectionLine, true
             }
         }

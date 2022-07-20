@@ -8,6 +8,11 @@ import (
 	"testing"
 )
 
+var (
+    refIniFile = path.Join("ini_files", "ref.ini")
+    genIniFile = path.Join("ini_files", "gen.ini")
+)
+
 // Test functions
 
 func TestLoadFromFile(t *testing.T) {
@@ -15,7 +20,7 @@ func TestLoadFromFile(t *testing.T) {
         want := newRefParser()
 
         got := New()
-        got.LoadFromFile(path.Join("ini_files", "ref.ini"))
+        got.LoadFromFile(refIniFile)
         assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
     })
 
@@ -116,11 +121,10 @@ func TestString(t *testing.T) {
 func TestSaveToFile(t *testing.T) {
     want := newRefParser()
 
-    genFilePath := path.Join("ini_files", "gen.ini")
-    want.SaveToFile(genFilePath)
+    want.SaveToFile(genIniFile)
 
     got := New()
-    got.LoadFromFile(genFilePath)
+    got.LoadFromFile(genIniFile)
 
     assertIniDataMap(t, got.iniDataMap, want.iniDataMap)
 }
@@ -137,11 +141,11 @@ func ExampleNew() {
 func ExampleParser_LoadFromFile() {
     // Create parser1 and fill it with data parsed from ini_files/ref.ini
     p1 := New()
-    p1.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p1.LoadFromFile(refIniFile)
 
     // Create parser2 and fill it with data parsed from the same file
     p2 := New()
-    p2.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p2.LoadFromFile(refIniFile)
 
     fmt.Println(reflect.DeepEqual(p1, p2))
     //output: true
@@ -150,7 +154,7 @@ func ExampleParser_LoadFromFile() {
 func ExampleParser_LoadFromString() {
     // Create reference parser and fill it with data parsed from ini_files/ref.ini
     refParser := New()
-    refParser.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    refParser.LoadFromFile(refIniFile)
 
     // Create generated parser from the string resulted from the reference parser
     genParser := New()
@@ -163,7 +167,7 @@ func ExampleParser_LoadFromString() {
 func ExampleParser_GetSectionNames() {
     // Create new parser and fill it with data parsed from ini_files/ref.ini
     p := New()
-    p.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p.LoadFromFile(refIniFile)
 
     sectionNames := p.GetSectionNames()
 
@@ -177,11 +181,11 @@ func ExampleParser_GetSectionNames() {
 func ExampleParser_GetSections() {
     // Create parser1 and fill it with data parsed from ini_files/ref.ini
     p1 := New()
-    p1.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p1.LoadFromFile(refIniFile)
 
     // Create parser2 and fill it with data parsed from the same file
     p2 := New()
-    p2.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p2.LoadFromFile(refIniFile)
 
     fmt.Println(reflect.DeepEqual(p1, p2))
     // output: true
@@ -190,7 +194,7 @@ func ExampleParser_GetSections() {
 func ExampleParser_Get() {
     // Create new parser and fill it with data parsed from ini_files/ref.ini
     p := New()
-    p.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p.LoadFromFile(refIniFile)
 
     valueField, _ := p.Get("owner", "name")
     fmt.Println(valueField)
@@ -200,7 +204,7 @@ func ExampleParser_Get() {
 func ExampleParser_Set() {
     // Create new parser and fill it with data parsed from ini_files/ref.ini
     p := New()
-    p.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p.LoadFromFile(refIniFile)
 
     // Sets the entity with key "name" in section "owner" to value "person"
     p.Set("owner", "name", "person")
@@ -212,7 +216,7 @@ func ExampleParser_Set() {
 func ExampleParser_String() {
     // Create new parser and fill it with data parsed from ini_files/ref.ini
     p := New()
-    p.LoadFromFile(path.Join("ini_files", "ref.ini"))
+    p.LoadFromFile(refIniFile)
 
     // Parse implements String so it is printed with ini form
     fmt.Println(p)
@@ -226,7 +230,7 @@ func ExampleParser_SaveToFile() {
     p.Set("new section", "new key", "new value")
 
     // Save the date to the given file in ini form
-    p.SaveToFile(path.Join("ini_files", "gen.ini"))
+    p.SaveToFile(genIniFile)
 }
 
 // Helper functions
@@ -260,6 +264,7 @@ func wrongIniStrings() []string {
     wrongCases = append(wrongCases, "[1234.9;890]")
     wrongCases = append(wrongCases, "serv==er = ;192.0.2.62     ")
     wrongCases = append(wrongCases, "port =")
+    wrongCases = append(wrongCases, "[]")
 
     return wrongCases
 }
